@@ -1,0 +1,90 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deprecation-check-pipeline 
+spec:
+  params:
+  - name: deprek8ionRef 
+    type: string
+    description: "Branch or tag of Deprek8ion to use"
+    default: "master"
+  - name: appRepo 
+    type: string
+    description: "Application Git Repository"
+  - name: appRef
+    type: string
+    description: "Branch or tag of App Repository to use"
+  - name: appPath
+    type: string
+    description: "Path in the repo or specific file that you want to test your policy against"
+  - name: k8sVersion
+    type: string
+    description: "Version of Kubernetes Policy that you want to use from the Deprek8ion repository"
+    default: "1.20"
+  workspaces:
+  - name: deprek8ion-data 
+    description: |
+      This workspace will contain rego policies from the deprek8ion repository 
+  - name: cop-rego-data
+    description: |
+      This workspace will contain rego policies fromt he Red Hat Communities of Practice rego-policies repository
+  - name: application-data
+    description: |
+      This workspace will contain the manifests or charts of the application that we are testing deployment of 
+  tasks:
+     - name: get-deprek8ion-policies 
+       taskRef: 
+         name: git-clone
+       workspaces:
+       - name: output
+         workspace: deprek8ion-data
+       params:
+       - name: url
+         value: https://github.com/swade1987/deprek8ion
+       - name: revision
+         value: "$(params.deprek8ionRef)" 
+       - name: deleteExisting
+         value: "true"
+     - name: get-rhcop-rego-policies
+       taskRef:
+         name: git-clone
+       workspaces:
+       - name: output
+         workspace: cop-rego-data
+       params:
+       - name: url
+         value: https://github.com/redhat-cop/rego-policies
+       - name: revision
+         value: "master"
+       - name: deleteExisting
+         value: "true"
+     - name: get-app-data
+       taskRef:
+         name: git-clone
+       workspaces:
+       - name: output
+         workspace: application-data
+       params:
+       - name: url
+         value: "$(params.appRepo)"
+       - name: revision
+         value: "$(params.appRef)"
+       - name: deleteExisting
+         value: "true"
+     - name: check-deprek8ion-policies
+       taskRef:
+         name: conftest
+       workspaces:
+       - name: app-source
+         workspace: application-data
+       - name: policy-source
+         workspace: deprek8ion-data
+       params:
+       - name: files
+         value: "$(params.appPath)"
+       - name: policy
+         value: "kubernetes-$(params.k8sVersion).rego"
+       runAfter:
+         - get-deprek8ion-policies
+         - get-rhcop-rego-policies
+         - get-app-data
