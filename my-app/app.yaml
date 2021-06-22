@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: http-echo 
+  name: http-echo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: http-echo
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: http-echo 
+    spec:
+      containers:
+      - image: hashicorp/http-echo:latest
+        name: http-echo
+        args:
+          - "-text=Hello, OpenShift TV!"
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: echo-service
+spec:
+  selector:
+    app: http-echo 
+  ports:
+    - port: 5678

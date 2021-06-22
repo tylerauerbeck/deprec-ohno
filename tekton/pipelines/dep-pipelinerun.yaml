@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: deprecation-check-pipeline
+spec:
+  params:
+  - name: deprek8ionRef
+    value: master
+  - name: appRepo
+    value: https://github.com/tylerauerbeck/deprec-ohno
+  - name: appRef
+    value: main
+  - name: appPath
+    value: my-app
+  - name: k8sVersion
+    value: "1.20"
+  - name: ocpVersion
+    value: "4.1"
+  pipelineRef:
+    name: deprecation-check-pipeline
+  workspaces:
+  - name: deprek8ion-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+        resources:
+          requests:
+            storage: 1Gi
+  - name: cop-rego-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+        resources:
+          requests:
+            storage: 1Gi
+  - name: application-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+        resources:
+          requests:
+            storage: 1Gi
+  - name: ocp-rego-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+        resources:
+          requests:
+            storage: 1Gi

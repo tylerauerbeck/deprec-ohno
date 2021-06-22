@@ -21,16 +21,22 @@ spec:
     type: string
     description: "Version of Kubernetes Policy that you want to use from the Deprek8ion repository"
     default: "1.20"
+  - name: ocpVersion
+    type: string
+    default: "4.1"
   workspaces:
   - name: deprek8ion-data 
     description: |
       This workspace will contain rego policies from the deprek8ion repository 
   - name: cop-rego-data
     description: |
-      This workspace will contain rego policies fromt he Red Hat Communities of Practice rego-policies repository
+      This workspace will contain rego policies from the Red Hat Communities of Practice rego-policies repository
   - name: application-data
     description: |
-      This workspace will contain the manifests or charts of the application that we are testing deployment of 
+      This workspace will contain the manifests or charts of the application that we are testing deployment of
+  - name: ocp-rego-data
+    description: |
+      This workspace will contain rego policies to use for openshift-installer configs
   tasks:
      - name: get-deprek8ion-policies 
        taskRef: 
@@ -71,6 +77,19 @@ spec:
          value: "$(params.appRef)"
        - name: deleteExisting
          value: "true"
+#     - name: get-ocp-data
+#       taskRef:
+#         name: git-clone
+#       workspaces:
+#       - name: output
+#         workspace: ocp-rego-data
+#       params:
+#       - name: url
+#         value: "https://github.com/tylerauerbeck/rego-ocp-regions"
+#       - name: revision
+#         value: "main"
+#       - name: deleteExisting
+#         value: "true"
      - name: check-deprek8ion-policies
        taskRef:
          name: conftest
@@ -84,7 +103,30 @@ spec:
          value: "$(params.appPath)"
        - name: policy
          value: "kubernetes-$(params.k8sVersion).rego"
+       - name: output
+         value: "stdout"
+       - name: args
+         value: ["--fail-on-warn"]
        runAfter:
          - get-deprek8ion-policies
          - get-rhcop-rego-policies
          - get-app-data
+#     - name: check-ocp-region-policies
+#       taskRef:
+#         name: conftest
+#       workspaces:
+#       - name: app-source
+#         workspace: application-data
+#       - name: policy-source
+#         workspace: ocp-rego-data
+#       params:
+#       - name: files
+#         value: "ocp"
+#       - name: policy
+#         value: "ocp-aws-$(params.ocpVersion).rego"
+#       - name: output
+#         value: "stdout"
+#       - name: args
+#         value: ["--fail-on-warn"]
+#       runAfter:
+#       - get-ocp-data
